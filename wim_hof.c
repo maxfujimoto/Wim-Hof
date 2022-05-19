@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <alsa/asoundlib.h>
+#include <time.h>
 
+// Define Sound Card
+#define PCM_DEVICE "default"
 
 // Prompt for breathing metronome, metronome speed, hyperventilation length and output file target.
 // Returns options[0] true for on
@@ -16,11 +19,8 @@ bool *metro_setup(bool *options)
     printf("Sound on? [Y/n] ");
     fgets(usrin, 23, stdin);
 
-    if( strlen(usrin) > 2) {
-      sound = 0;
-      continue;
-    }
-    if( sscanf(usrin, "%c", &sound) != 1) {
+    if( strlen(usrin) > 2 ||
+	sscanf(usrin, "%c", &sound) != 1) {
       sound = 0;
       continue;
     }
@@ -53,11 +53,8 @@ bool *metro_speed(bool *options)
     printf("Metronome speed? [s/M/f] ");
     fgets(usrin, 23, stdin);
 
-    if( strlen(usrin) > 2) {
-      speed = 0;
-      continue;
-    }
-    if( sscanf(usrin, "%c", &speed) != 1) {
+    if( strlen(usrin) > 2 ||
+	sscanf(usrin, "%c", &speed) != 1) {
       speed = 0;
       continue;
     }
@@ -96,14 +93,10 @@ int metro_length()
 
 
     if( usrin[0] == '\n'){
-      printf("return");
       return 30;
     }	
-    if( strlen(usrin) > 3) {
-      length = 0;
-      continue;
-    }
-    if( sscanf(usrin, "%d", &length) != 1) {
+    if( strlen(usrin) > 3 ||
+	sscanf(usrin, "%d", &length) != 1) {
       length = 0;
       continue;
     }
@@ -119,29 +112,66 @@ int metro_length()
   return MetroLength;
 }
 
-
-// Stopwatch that returns second value or 0 for failure.
-float timer()
+// Detect a key-press
+int key_press()
 {
-  float time = 0;
+  char usrin[3];
 
-  
-  return time;
+  fgets(usrin, 2, stdin);
+  if(usrin[0] == '\n') {
+    return 0;
+  }
+  else if (usrin[0] == 'q' ) {
+    return 1;
+  }
+  return 1;
 }
 
-int main ()
+// Stopwatch that returns second value or 0 for failure.
+unsigned int timer()
 {
+  unsigned int timediff = 0;
+  time_t start;
+  time_t stop;
+  
+  time(&start);
+  printf("press [RETURN] to stop or [q - RETURN] to quit.");
+  if(!key_press()) {
+    time(&stop);
+    timediff = difftime(stop, start);
+  }
+  return timediff;
+}
+
+
+int main ()
+{ 
   bool options[3] = {0,0,0};
   int MetroLength = 0;
+  unsigned int BreathHoldVals[10];
+  int BreathHolds = 0;
 
   printf("\n\nWelcome to a terminal based Wim Hof breathing guide.\n\n");
 
   metro_setup(options);
 
-  if( options[0]){
+  if( options[0]) {
     metro_speed(options);
     MetroLength = metro_length();
   }
-  printf( "bitmap: %d%d%d\nlength: %d\n", options[0], options[1], options[2], MetroLength);
-  //timer();
-}
+  else {
+    int i;
+    for(i = 0; i < 10; ++i, ++BreathHolds) {
+      printf("Press [RETURN] to begin the timer or [q - RETURN] to quit.");
+      if( !key_press()){
+	BreathHoldVals[i] = timer();
+      }
+      else {
+	break;
+      }
+    }
+    for(i = 0; i < BreathHolds; ++i) {
+      printf("Breath Hold %d: %d\n", i+1, BreathHoldVals[i]); 
+    }
+  }
+} 
