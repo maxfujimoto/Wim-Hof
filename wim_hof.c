@@ -94,6 +94,11 @@ int metro_length()
     printf("Hyperventilation duration? [30] ");
     fgets(usrin, 23, stdin);
 
+
+    if( usrin[0] == '\n'){
+      printf("return");
+      return 30;
+    }	
     if( strlen(usrin) > 3) {
       length = 0;
       continue;
@@ -127,7 +132,7 @@ float timer()
 int main ()
 {
   bool options[3] = {0,0,0};
-  int MetroLength = 30;
+  int MetroLength = 0;
 
   printf("\n\nWelcome to a terminal based Wim Hof breathing guide.\n\n");
 
